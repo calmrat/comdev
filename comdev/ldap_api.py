@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Author: Chris Ward <cward@redhat.com>
+
+import logging
+import os
+
+from ldap3 import Server, Connection, ALL
+import pandas as pd
+
+from library import load_config
+
+
+class LDAPer(object):
+    def __init__(self, app_name, merge_path=None):
+        self.app_name = app_name
+        self.merge_path = merge_path
+
+        config = self.config = load_config(app_name)['ldap'].get()
+
+        self.base_query = config['base_query']
+        self.path_cache = os.environ['{}_CACHE'.format(app_name)]
+        self.path_pickle = os.path.join(self.path_cache, 'ldap.pickle')
+
+    def _get_api(self):
+        uri = self.config['uri']
+        user = self.config['user']
+        password = self.config['password']
+        server = Server(uri, get_info=ALL, use_ssl=True)
+        api = Connection(server, user=user, password=password)
+        api.bind()
+        return api
+
+    def get_users(self, sync=False):
+        if sync:
+            self._sync_users()
+        is_cached = os.path.isfile(self.path_pickle)
+        if is_cached:
+            # load local cache, otherwise fail and tell user to sync first
+            df = pd.read_pickle(self.path_pickle)
+        else:
+            raise RuntimeError("Run 'sync' command first")
+        return df
+
+    def _sync_users(self):
+        raise NotImplementedError('Define this in subclass')
+
+    def query_users(self, query, attrs, obj_class='(objectclass=person)',
+                    as_df=False):
+        log.debug('LDAP search START')
+        api = self._get_api()
+        base_query = self.base_query if self.base_query else ''
+        query = ','.join((query, base_query)) if query else base_query
+        api.search(query, obj_class, attributes=attrs)
+        entries = api.entries
+        log.debug(' ... found {} entries'.format(len(entries)))
+        if as_df:
+            df = pd.DataFrame()
+            for entry in entries:
+                series = pd.Series(entry.entry_attributes_as_dict)
+                df = pd.concat([df, series])
+            return df
+        else:
+            return entries
+
+    def find_uids(self, uids, live):
+        if live:
+            users = self.query_users(
+                'uid={}'.format('|'.join(uids)), as_df=True)
+        else:
+            # FIXME: this should work through query_users... one search ui
+            users = self.get_users()
+            users = users[users.index.isin(uids)]
+        return users
+
+
+# Setup console logging
+log = logging.getLogger(__name__)
+
+
+if __name__ == '__main__':
+    import ipdb  # NOQA
+    ipdb.set_trace()
