@@ -8,7 +8,7 @@ import os
 from ldap3 import Server, Connection, ALL
 import pandas as pd
 
-from library import load_config
+from comdev.lib import load_config, expand_path
 
 
 class LDAPer(object):
@@ -16,10 +16,13 @@ class LDAPer(object):
         self.app_name = app_name
         self.merge_path = merge_path
 
-        config = self.config = load_config(app_name)['ldap'].get()
+        config = load_config(app_name)
+        paths = {k: expand_path(x) for k, x in config['paths'].get().items()}
+
+        config = self.config = config['ldap'].get()
 
         self.base_query = config['base_query']
-        self.path_cache = os.environ['{}_CACHE'.format(app_name)]
+        self.path_cache = paths['cache']
         self.path_pickle = os.path.join(self.path_cache, 'ldap.pickle')
 
     def _get_api(self):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Author: Chris Ward <cward@redhat.com>
 
 '''
 '''
@@ -11,6 +12,7 @@ import pytz
 import re
 
 import confuse
+import jinja2
 import pandas as pd
 from premailer import Premailer
 import yaml
@@ -25,6 +27,10 @@ def as_list(obj):
         return obj.apply(lambda x: [y.strip() for y in (x or '').split(',')])
     else:
         return list(obj)
+
+
+def expand_path(path):
+    return os.path.abspath(os.path.expanduser(path))
 
 
 def set_path(dirname, parent_path=None, makedirs=True, env_var=None):
@@ -49,7 +55,7 @@ def load_yaml(path, transpose=True):
     if not os.path.exists(path):
         raise IOError('{} does not exist'.format(path))
     with open(path) as stream:
-        data = yaml.load(stream, yaml.CLoader)
+        data = yaml.load(stream, yaml.Loader)
     if transpose:
         df = pd.DataFrame(data).T.copy()
     else:
@@ -92,12 +98,11 @@ def parse_email(string):
     return user
 
 
-def render_template(env, path, params, inline_css=True):
+def render_template(jinja2_env, path, params, inline_css=False):
     '''
     '''
-    template = env.get_template(path)
+    template = jinja2_env.get_template(path)
     content = template.render(**params)
-
     if os.path.basename(path).split('.')[-1].lower() == 'html':
         if inline_css:
             log.debug('... Inlining CSS')
@@ -105,14 +110,26 @@ def render_template(env, path, params, inline_css=True):
                 content, remove_classes=True,
                 cssutils_logging_level=logging.ERROR,
                 preserve_inline_attachments=False).transform()
-
     return content
+
+
+def get_jinja2_env(path_templates):
+    _loader = jinja2.FileSystemLoader(path_templates)
+    extensions = ['jinja2.ext.i18n', 'jinja2.ext.with_']
+    env = jinja2.Environment(
+        loader=_loader,
+        autoescape=jinja2.select_autoescape(
+            disabled_extensions=('txt',), default_for_string=True,
+            default=True),
+        extensions=extensions)
+    return env
 
 
 def dumps(content, path):
     '''
     '''
     log.debug('Exporting to {}'.format(path))
+    mkdirs(path)
     with open(path, 'w') as out:
         out.writelines(content)
 
@@ -136,6 +153,13 @@ def dt_normalize(dt, iso=False, local_tz=False, utc_overide=False):
     # return a standard full iso string form
     dt = dt.strftime('%Y-%m-%dT%H:%M:%S.%f%z') if iso else dt
     return dt
+
+
+def mkdirs(path):
+    path = os.path.dirname(path)
+    if not os.path.exists(path):
+        log.debug('Creating path: {}'.format(path))
+        os.makedirs(path)
 
 
 logging.basicConfig(format='%(message)s')

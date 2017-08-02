@@ -17,7 +17,7 @@ import mimetypes
 import os
 import time
 
-from library import load_config
+from comdev.lib import load_config, expand_path
 
 from apiclient import discovery
 import atom
@@ -35,7 +35,7 @@ import oauth2client
 from oauth2client import client, tools
 
 
-def get_credentials(self, app_name, credentials, client_secret, scopes):
+def get_credentials(app_name, credentials, client_secret, scopes):
     ''' '''
     store = oauth2client.file.Storage(credentials)
     credentials = store.get()
@@ -49,7 +49,11 @@ def get_credentials(self, app_name, credentials, client_secret, scopes):
 
 class Gmailer(object):
     def __init__(self, app_name, sender=None):
-        config = self.config = load_config(app_name)['gmail'].get()
+        config = load_config(app_name)
+        paths = {k: expand_path(x) for k, x in config['paths'].get().items()}
+        self.path_logs = paths['logs']
+
+        config = self.config = config['gmail'].get()
 
         self.app_name = app_name
         self.sender = sender or self.config['sender']
@@ -59,8 +63,6 @@ class Gmailer(object):
             config['client_secret'])
         self.path_credentials = os.path.expanduser(
             config['credentials'])
-
-        self.path_logs = os.environ['{}_LOGS'.format(app_name)]
 
         self.credentials = get_credentials(
             self.app_name, self.path_credentials, self.path_client_secret,

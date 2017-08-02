@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Author: Chris Ward <cward@redhat.com>
 
 from setuptools import setup
 import sys
@@ -23,10 +24,11 @@ setup_info = dict(
     # Package info
     packages=['comdev', ],
     install_requires=[
+        'babel',
         'click',
         'confuse',
         # 'gdata',  # not py3 compatible
-        'https://github.com/dvska/gdata-python3#egg=gdata'
+        #'https://github.com/dvska/gdata-python3#egg=gdata'
         # ^^^ must run `python setup.py install` though... develop
         'google-api-python-client',
         'ipdb',
@@ -37,7 +39,7 @@ setup_info = dict(
         'progressbar2',
         'oauth2client',
     ],
-
+    scripts=['bin/comdev'],
 )
 
 
