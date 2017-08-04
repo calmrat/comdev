@@ -5,8 +5,9 @@
 from setuptools import setup
 import sys
 
-if sys.version_info < (3, 6):
-    sys.exit('Sorry, Python < 3.6 is not supported')
+if sys.version_info < (3, 4):
+    sys.exit('Sorry, Python < 3.4 is not supported')
+    sys.exit('Python 3.6 is RECOMMENDED')
 
 from comdev import __version__ as VERSION
 
@@ -30,6 +31,7 @@ setup_info = dict(
         'confuse',
         'facepy',
         'feedparser',
+        # 'gdata',  # not py3 compatible
         'gdata-python3',  # py3 compatible
         'google-api-python-client',
         'ipdb',
