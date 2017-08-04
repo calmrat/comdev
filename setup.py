@@ -21,6 +21,7 @@ setup_info = dict(
     author_email='cward@redhat.com',
     description=long_description,
     long_description=long_description,
+    url='https://github.com/kejbaly2/comdev',
     # Package info
     packages=['comdev'],
     install_requires=[
