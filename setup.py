@@ -22,23 +22,34 @@ setup_info = dict(
     description=long_description,
     long_description=long_description,
     # Package info
-    packages=['comdev', ],
+    packages=['comdev'],
     install_requires=[
         'babel',
         'click',
         'confuse',
-        # 'gdata',  # not py3 compatible
-        #'https://github.com/dvska/gdata-python3#egg=gdata'
-        # ^^^ must run `python setup.py install` though... develop
+        'facepy',
+        'feedparser',
+        'gdata-python3',  # py3 compatible
         'google-api-python-client',
         'ipdb',
+        'ipython',
         'jinja2',
         'ldap3',
+        'meetup-api',
+        'oauth2client',
         'pandas',
         'premailer',
         'progressbar2',
+        'python-twitter',
+        'requests',
         'oauth2client',
+        'xlwt',
     ],
+    dependency_links=[
+        'https://github.com/dvska/gdata-python3#egg=gdata'
+        # ^^^ must run `python setup.py install` though... develop
+    ],
+
     scripts=['bin/comdev'],
 )
 

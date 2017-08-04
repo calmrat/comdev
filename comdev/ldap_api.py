@@ -2,16 +2,19 @@
 # -*- coding: utf-8 -*-
 # Author: Chris Ward <cward@redhat.com>
 
+import ipdb  # NOQA
 import logging
 import os
 
 from ldap3 import Server, Connection, ALL
 import pandas as pd
 
-from comdev.lib import load_config, expand_path
+from comdev.lib import load_config, expand_path, load_yaml
 
 
 class LDAPer(object):
+    attrs_user = None
+
     def __init__(self, app_name, merge_path=None):
         self.app_name = app_name
         self.merge_path = merge_path
@@ -36,7 +39,7 @@ class LDAPer(object):
 
     def get_users(self, sync=False):
         if sync:
-            self._sync_users()
+            self.sync_users()
         is_cached = os.path.isfile(self.path_pickle)
         if is_cached:
             # load local cache, otherwise fail and tell user to sync first
@@ -45,15 +48,31 @@ class LDAPer(object):
             raise RuntimeError("Run 'sync' command first")
         return df
 
-    def _sync_users(self):
-        raise NotImplementedError('Define this in subclass')
+    def sync_users(self):
+        log.info('Syncing LDAP user data')
+        merge_path = self.merge_path
+        entries = self.query_users()
+        # extract out all the users data as list of dicts
+        users = [user.entry_attributes_as_dict for user in entries]
+        # dump it all into a dataframe
+        df = pd.DataFrame(users)
+        df.index = df['uid']
+        # assumes index <-> index join
+        if merge_path:
+            defaults = load_yaml(merge_path)
+            df = df.join(defaults, rsuffix='_local')
+        # sync cache locally
+        df.to_pickle(self.path_pickle)
+        return df
 
-    def query_users(self, query, attrs, obj_class='(objectclass=person)',
-                    as_df=False):
+    def query_users(self, query=None, attrs=None,
+                    obj_class='(objectclass=person)', as_df=False):
         log.debug('LDAP search START')
+        attrs = attrs or self.attrs_user
         api = self._get_api()
         base_query = self.base_query if self.base_query else ''
         query = ','.join((query, base_query)) if query else base_query
+        attrs = attrs.keys() if isinstance(attrs, dict) else attrs
         api.search(query, obj_class, attributes=attrs)
         entries = api.entries
         log.debug(' ... found {} entries'.format(len(entries)))
@@ -82,5 +101,4 @@ log = logging.getLogger(__name__)
 
 
 if __name__ == '__main__':
-    import ipdb  # NOQA
     ipdb.set_trace()
