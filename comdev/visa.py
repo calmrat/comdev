@@ -1,16 +1,20 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+# Author: Chris Ward <cward@redhat.com>
+# Based off a work done by fzatlouk@redhat.com
 
 """
 Automatically generate visa invitation letters as pdf and mail to recipient
 """
 
 import datetime
+import os  # NOQA
 
 import ipdb  # NOQA
 import pdfkit
 
-from comdev.lib import load_config
+from comdev.lib import load_config, expand_path, render_template
+from comdev.lib import get_jinja2_env, saveas
 
 
 class Viser(object):
@@ -31,16 +35,41 @@ class Viser(object):
             'dt_departure': dt_departure,
         }
 
-        config = load_config(app_name)
-        event = config['events'][event_name].get()
+        self.config = config = load_config(app_name).get()
+        event = config['events'][event_name]
+
         self.params.update(event)
 
-        print(self.params)
+    def export(self):
+        # # PATTERN? # #
+        # move this all into render_template or this function into comdev.lib?
+        #
+        config = self.config
+        today = self.params['today']
+        path_templates_comdev = expand_path(
+            config['paths']['templates'].get('comdev'))
+        jinja2_env = get_jinja2_env(path_templates_comdev)
+        path_template = 'mail/visa-invitation-letter.html'
+        path_export = expand_path(config['paths']['export'])
+        content = render_template(jinja2_env, path_template, self.params)
+        name = self.params.get('invitee_name').replace(' ', '-')
+        path_file = 'visa-invitation-letter-{}-{}'.format(name, today)
+        saveas(path_file, content, 'html', path_export)
+        #
+        # # END PATTERN? # #
 
-    def export():
-        pdfkit.from_file(["temp.html"], "visas/visa_" + str(user_id) + ".pdf")
+        path_pdf = os.path.join(path_export, '{}.pdf'.format(path_file))
+        path_saveas = os.path.join(path_export, path_file)
+        ipdb.set_trace()
+        pdfkit.from_file(path_saveas, path_pdf)
 
 
 if __name__ == '__main__':
+    kwargs = dict(app_name='devconf', event_name='DevConf.cz 2018',
+                  invitee_name='Chris Ward', passport_number='XXXXXXYYYYYY',
+                  passport_expiration='2018-01-01', passport_issued_by='XXX',
+                  invitee_citizenship='XXX', dt_arrival='2018-01-20',
+                  dt_departure='2018-01-28')
+    v = Viser(**kwargs)
+    v.export()
     ipdb.set_trace()
-    cli(obj={})

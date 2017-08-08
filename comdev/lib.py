@@ -20,7 +20,7 @@ from premailer import Premailer
 import yaml
 
 
-## Configuration with confuse
+# # Configuration with confuse
 def load_config(app_name, path=None):
     '''
     '''
@@ -32,7 +32,7 @@ def load_config(app_name, path=None):
     return config
 
 
-## JINJA2
+# # JINJA2
 def parse_email(string):
     '''
     '''
@@ -61,6 +61,7 @@ def render_template(jinja2_env, path, params, inline_css=False):
 def get_jinja2_env(path_templates):
     path_templates = expand_path(path_templates)
     _loader = jinja2.FileSystemLoader(path_templates)
+    # FIXME: make this a kwarg 'extensions'?
     extensions = ['jinja2.ext.i18n', 'jinja2.ext.with_']
     env = jinja2.Environment(
         loader=_loader,
@@ -71,7 +72,7 @@ def get_jinja2_env(path_templates):
     return env
 
 
-## Object manipulation
+# # Object manipulation
 def as_list(obj):
     '''
     '''
@@ -96,7 +97,7 @@ def list2str(values, separator=";"):
     return values_csv
 
 
-## Datetime
+# # Datetime
 def dt_normalize(dt, iso=False, local_tz=False, utc_overide=False):
     '''
     '''
@@ -159,7 +160,7 @@ def last_month_year(iso=True):
         return dt
 
 
-## Path manipulation
+# # Path manipulation
 def expand_path(path):
     return os.path.abspath(os.path.expanduser(path))
 
@@ -179,9 +180,9 @@ def set_path(dirname, parent_path=None, makedirs=True, env_var=None):
     return path
 
 
-def saveas(title, message, ext, subdir=None):
+def saveas(title, content, ext, subdir=None):
     path = sluggify(title, ext, subdir)
-    dumps(message, path)
+    dumps(content, path)
 
 
 def sluggify(string, ext=None, subdir=None, keep_characters=(' ', '.', '-')):
@@ -201,7 +202,7 @@ def sluggify(string, ext=None, subdir=None, keep_characters=(' ', '.', '-')):
     return slug
 
 
-## I/O
+# # I/O
 def dumps(content, path):
     '''
     '''
@@ -267,9 +268,9 @@ USER = getpass.getuser()
 UTC_TZ = pytz.timezone('utc')
 # FIXME: Why LOCAL_TZ == UTC? confusing...
 LOCAL_TZ = pytz.timezone('utc')
-#if config['local_timezone'].exists():
+# if config['local_timezone'].exists():
 #    LOCAL_TZ = pytz.timezone(config['local_timezone'].get())
-#else:
+# else:
 #    LOCAL_TZ = pytz.timezone('utc')
 
 

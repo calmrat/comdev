@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" class="no-js">
+    <head>
+
+        {% include 'meta.html' %}
+
+        {% block title %} <title>{{ _('') }}</title> {% endblock %}
+
+        <!-- Favicon -->
+        <link rel="shortcut icon" href="{{ '/images/favicon.png'|static }}" type="image/png">
+
+        {% block css %} {% include 'css.html' %} {% endblock %}
+
+    </head>
+
+  <body id="page-top">
+
+    {% block nav %} 
+    <!-- Navigation -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-12">
+          {% block nav_logo %}               {% endblock %}
+	  </div>
+        </div>
+      </div>
+
+      <div class="container">
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="navbar-collapse">
+          <ul class="nav navbar-nav navbar-left">
+              <li>
+                  <a href="{{ [lang, 'index.html']|join('/')|static }}" class="fa fa-home" title="Home">
+                      <span class="hide">{{ _('Home') }}</span>
+                  </a>
+              </li>
+              <li>
+                <div class="dropdown" style="margin-top: 12px; color: #777777">
+                  <i class="fa fa-history" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                    <span class="caret"></span>
+                  </i>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                      <li class="dropdown-header dropdown-header-title">{{ _('XXX') }}</li>
+		      <li class="dropdown-header dropdown-header-subtitle"><b>YYY</b></li>
+		      <li><a href="">{{ _('XXX') }}</a></li>
+                  </ul>
+
+                </div>
+            </li>
+          </ul>
+
+              <li><a href="mailto:{{ email_admin }}" class="fa fa-envelope" title="E-Mail">
+                <span class="hide">Contact us</span>
+            </a></li>
+            <li>
+                <div class="dropdown" style="margin-top: 13px;">
+                    <div type="button" id="dropdownMenu2" data-toggle="dropdown">
+		      <img src="{{ '/images/lang_flag_%s.svg'|format(lang)|static }}" class="navbar-flag"  />
+                    </div>
+                  <ul class="dropdown-menu dropdown-menu-flag" aria-labelledby="dropdownMenu2">
+                    <li><a href="{{ ['en', path]|join('/')|static }}"><img src="{{ '/images/lang_flag_%s.svg'|format('en')|static }}" class="navbar-flag navbar-flag-padded"/> (en)</a></li>
+                    <li><a href="{{ ['cs', path]|join('/')|static }}"><img src="{{ '/images/lang_flag_%s.svg'|format('cs')|static }}" class="navbar-flag navbar-flag-padded"/> (cs)</a></li>
+                    <li class="dropdown-header">Site language</li>
+                  </ul>
+                </div>
+            </li>
+
+          </ul>
+        </div>
+
+        <!-- /.navbar-collapse -->
+      </div>
+
+      <!-- /.container -->
+    </nav>
+
+    {% endblock %} 
+
+    {% block body %} {% endblock %}
+
+    {% block footer %} {% include 'footer.html' %} {% endblock %}
+
+  </body>
+
+  {% block scripts %} {% include 'scripts.html' %} {% endblock %}
+
+</html>

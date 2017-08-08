@@ -13,6 +13,8 @@ from comdev import __version__ as VERSION
 
 long_description = '''Community Development support library'''
 
+# FIXME: NOTE dependency on https://wkhtmltopdf.org/downloads.html
+
 setup_info = dict(
     # Metadata
     name='comdev',
