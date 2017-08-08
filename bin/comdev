@@ -202,9 +202,19 @@ def serve(ctx):
     Launch flask application to serve up the pages dynamically
     '''
 
-    from devconf.flask_app import app
+    from comdev.flask_app import app
     # FIXME: why doesn't debug info log when running this way?
     app.run(debug=True)
+
+
+@cli.command('visa')
+@click.pass_context
+def visa(ctx):
+    '''
+    Generate a visa letter and email it to said recipients
+    '''
+    from comdev.visa import Viser
+    Viser
 
 
 if __name__ == '__main__':

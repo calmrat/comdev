@@ -31,8 +31,7 @@ setup_info = dict(
         'confuse',
         'facepy',
         'feedparser',
-        # 'gdata',  # not py3 compatible
-        'gdata-python3',  # py3 compatible
+        # 'gdata-python3',  # py3 compatible
         'google-api-python-client',
         'ipdb',
         'ipython',
@@ -41,6 +40,7 @@ setup_info = dict(
         'meetup-api',
         'oauth2client',
         'pandas',
+        'pdfkit',
         'premailer',
         'progressbar2',
         'python-twitter',
