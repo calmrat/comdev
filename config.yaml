@@ -1,0 +1,11 @@
+paths: 
+    templates: './templates'
+    static: './static'
+    build: './build'
+    locale: './i18n'
+
+templates: [
+    'index.html',
+]
+
+locales: ['en_US', 'cs_CZ']

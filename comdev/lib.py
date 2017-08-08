@@ -12,6 +12,7 @@ import logging
 import os
 import pytz
 import re
+import shutil
 
 import confuse
 import jinja2
@@ -218,6 +219,21 @@ def mkdirs(path):
     if not os.path.exists(path):
         log.debug('Creating path: {}'.format(path))
         os.makedirs(path)
+    else:
+        log.debug('mkdirs failed. Path exists: {}'.format(path))
+
+
+
+def copy(src, dst):
+    if os.path.isdir(src):
+        shutil.copytree(src, dst)
+    else:
+        shutil.copy2(src, dst)
+
+
+def touch(path):
+    with open(path, 'a'):
+        os.utime(path)
 
 
 def load_yaml(path, transpose=True):

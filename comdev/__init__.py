@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Chris Ward <cward@redhat.com>
 
+__app__ = 'comdev'
 __author__ = 'Chris Ward (@kejbaly2) <cward@redhat.com>'
 __copyright__ = 'Copyright 2017, Chris Ward'
 __credits__ = ['Chris Ward']

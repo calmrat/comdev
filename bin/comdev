@@ -15,11 +15,12 @@ from babel.support import Translations
 import click
 import ipdb  # NOQA
 
+from comdev import __app__
 from comdev.lib import render_template, load_config, get_jinja2_env, dumps
-from comdev.lib import expand_path
+from comdev.lib import expand_path, mkdirs, touch, copy
 
 # Setup console logging; since this is a bin script, grab root
-log = logging.getLogger()
+log = logging.getLogger(__app__)
 
 
 def _clean_build(path_build):
@@ -193,6 +194,52 @@ def i18n(ctx, action):
     if 'compile' in action:
         cmd = 'pybabel compile -f -d ./i18n'
         subprocess.run(cmd, shell=True)
+
+
+@cli.command('newsite')
+@click.argument('basepath', type=str, required=True)
+@click.pass_context
+def newsite(ctx, basepath):
+    '''
+    Create a new comdev default site.
+    '''
+    # FIXME: include default config yaml's in .config/{app_name} ?
+
+    app_name = ctx.obj['app_name']
+    join = os.path.join
+
+    config = load_config(__app__).get()
+    src_path = expand_path(config['paths']['src_repo'])
+
+    # needs to have the ending '/' to be considered a path by mkdirs()
+    repo_path = join(expand_path(basepath), app_name) + '/'
+    mkdirs(repo_path)
+
+    paths = {
+        'copy': {
+            'templates': 'templates/',
+            'path_static': 'static/',
+            'path_media': 'media/',
+            'path_i18n': 'i18n/',
+            'path_babel_cfg': 'babel.cfg',
+            'path_config': 'config.yaml',
+        },
+        'mkdir': {
+            'path_pymod': app_name + '/',
+        },
+        'touch': {
+            'path_pymod_init': join(app_name, '__init__.py'),
+        },
+    }
+
+    _paths = sorted(paths['copy'].values(), key=lambda x: len(x.split('/')))
+    [copy(join(src_path, _), join(repo_path, _)) for _ in _paths]
+
+    _paths = sorted(paths['mkdir'].values(), key=lambda x: len(x.split('/')))
+    [mkdirs(join(repo_path, _)) for _ in _paths]
+
+    _paths = sorted(paths['touch'].values(), key=lambda x: len(x.split('/')))
+    [touch(join(repo_path, _)) for _ in _paths]
 
 
 @cli.command('serve')
