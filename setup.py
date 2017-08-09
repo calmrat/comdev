@@ -49,6 +49,11 @@ setup_info = dict(
         'requests',
         'oauth2client',
         'xlwt',
+        # required packages for pyandoc:
+        # - pandoc
+        # - texlive-latex-bin-bin
+        # - texlive-collection-fontsrecommended
+        #'pyandoc',
     ],
     dependency_links=[
         'https://github.com/dvska/gdata-python3#egg=gdata'

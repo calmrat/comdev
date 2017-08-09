@@ -1,0 +1,58 @@
+{% extends "pdf/base.html" %}
+
+{% block body %}
+<div style="width: 100%; height:100px; background-color: #cc0000 !important; 
+            padding-top: 20px; color: white;">
+    <div style="padding-left: 10%; float: left;">
+        <img src="{{ path_org_company_logo }}" style="width: 200px;"/>
+    </div>
+    <div style="padding-right: 10%; text-align: left; float: right">
+        <ul style="list-style-type: none;">
+        <li>{{ org_company }}</li>
+        <li>{{ org_company_address|safe }}</li>
+        <li>{{ today }}</li>
+        </ul>
+    </div>
+</div>
+
+<div style="width: 90%; padding-left: 10%; padding-top: 50px">
+
+    <ul style="list-style-type: none; padding-left: 0px;">
+        <li>Name: {{ invitee_name }}</li>
+        <li>Passport Number: {{ passport_number }}</li>
+        <li>Issued by: {{ passport_issued_by }}</li>
+        <li>Expiration date: {{ passport_expiration }}</li>
+        <li>Citizenship: {{ invitee_citizenship }} </li>
+    </ul>
+
+    <br/>
+
+    <p>On behalf of {{ org_company }}. I am writing to invite {{ invitee_name }} 
+    (passport no.: {{ passport_number }}) to the {{ event_name }} in {{ event_city }}, 
+    {{ event_country }}, which is organized by our company. {{ event_name }} is 
+    held from {{ event_dates }} at {{ event_venue }}. </p>
+
+    {{ event_description|safe }}
+
+    <p>{{ invitee_name }} is expected to arrive to the Czech Republic on 
+    {{ dt_arrival }} and will stay in the {{ event_country }} to {{ dt_departure }}. </p>
+
+    <p>I trust this information is sufficient for the necessary visa to be issued. 
+    Should you have further questions, please contact me 
+    by e-mail (<a href="mailto: {{ org_email }}">{{ org_email }}</a>) 
+    or by phone at {{ org_phone }}.
+    </p>
+
+</div>
+
+<div style="padding-right: 10%; float: right; margin-top: 20px;">
+    <p>Regards,</p>
+    <ul style="list-style-type: none; padding-left: 0px;">
+    <li>{{ org_name }}</li>
+    <li>{{ org_title }}</li>
+    <li>{{ org_company }}</li>
+    </ul>
+    <br/>
+    <img src="{{ path_signature }}" />
+</div>
+{% endblock %}

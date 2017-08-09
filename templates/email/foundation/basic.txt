@@ -1,0 +1,6 @@
+{% extends 'email/foundation/base.txt' %}
+{% block content -%}
+
+Hello world!
+
+{% endblock %}

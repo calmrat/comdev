@@ -2,14 +2,14 @@
 <html lang="{{ lang }}" class="no-js">
     <head>
 
-        {% include 'meta.html' %}
+        {% include 'www/meta.html' %}
 
         {% block title %} <title>{{ _('') }}</title> {% endblock %}
 
         <!-- Favicon -->
         <link rel="shortcut icon" href="{{ '/images/favicon.png'|static }}" type="image/png">
 
-        {% block css %} {% include 'css.html' %} {% endblock %}
+        {% block css %} {% include 'www/css.html' %} {% endblock %}
 
     </head>
 
@@ -80,10 +80,10 @@
 
     {% block body %} {% endblock %}
 
-    {% block footer %} {% include 'footer.html' %} {% endblock %}
+    {% block footer %} {% include 'www/footer.html' %} {% endblock %}
 
   </body>
 
-  {% block scripts %} {% include 'scripts.html' %} {% endblock %}
+  {% block scripts %} {% include 'www/scripts.html' %} {% endblock %}
 
 </html>

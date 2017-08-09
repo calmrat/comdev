@@ -7,6 +7,7 @@
 
 import datetime
 import dateutil
+import functools
 import getpass
 import logging
 import os
@@ -14,8 +15,10 @@ import pytz
 import re
 import shutil
 
+from babel.support import Translations
 import confuse
 import jinja2
+import ipdb  # NOQA
 import pandas as pd
 from premailer import Premailer
 import yaml
@@ -59,18 +62,82 @@ def render_template(jinja2_env, path, params, inline_css=False):
     return content
 
 
-def get_jinja2_env(path_templates):
+def ext_url(path, path_build, static=False, lang=None):
+    path = expand_path(path)
+    locale = os.environ.get('LOCALE', 'en_US')
+    lang = lang or locale.split('_')[0]
+    if path[0] == '/':
+        path = path.lstrip('/')  # path.join only joins if no leading '/'
+        if static:
+            path = os.path.join(path_build, path)
+        else:
+            path = os.path.join(path_build, lang, path)
+    else:
+        path = os.path.join(path_build, path)
+
+    #path = 'file://{}'.format(path)
+    return path
+
+
+def rel_url(path, static=False, lang=None):
+    path = expand_path(path)
+    locale = os.environ.get('LOCALE', 'en_US')
+    lang = lang or locale.split('_')[0]
+    if path[0] == '/' and static:
+        path = path.lstrip('/')  # path.join only joins if no leading '/'
+        path = os.path.join(lang, path)
+    new_path = '{}'.format(path)
+    return new_path
+
+
+def get_jinja2_env(path_templates, rel_paths=False, path_build=None,
+                   path_locale=None, locale='en_US'):
     path_templates = expand_path(path_templates)
+    path_build = expand_path(path_build) if path_build else path_build
     _loader = jinja2.FileSystemLoader(path_templates)
+
     # FIXME: make this a kwarg 'extensions'?
     extensions = ['jinja2.ext.i18n', 'jinja2.ext.with_']
     env = jinja2.Environment(
         loader=_loader,
-        autoescape=jinja2.select_autoescape(
-            disabled_extensions=('txt',), default_for_string=True,
-            default=True),
+        autoescape=jinja2.select_autoescape(disabled_extensions=('txt',),
+                                            default_for_string=True,
+                                            default=True),
         extensions=extensions)
+
+    # add the ext to the jinja environment
+    if rel_paths:
+        env.filters['url'] = rel_url
+        env.filters['static'] = functools.partial(rel_url, static=True)
+    else:
+        env.filters['url'] = functools.partial(ext_url, static=False,
+                                               path_build=path_build)
+        env.filters['static'] = functools.partial(ext_url, static=True,
+                                                  path_build=path_build)
+
+    if path_locale:
+        translations = Translations.load(path_locale, [locale])
+        env.install_gettext_translations(translations, newstyle=True)
+
     return env
+
+
+def build_clean(path_build):
+    if os.path.exists(path_build):
+        log.debug('Cleaning up old builds in {}'.format(path_build))
+        shutil.rmtree(path_build)
+
+
+def static_copy(path_build, path_static):
+    # Copy out all the static files to root of output directory
+    for _path in os.listdir(path_static):
+        from_path = os.path.join(path_static, _path)
+        to_path = os.path.join(path_build, _path)
+        if os.path.exists(to_path):
+            log.warning('"static" path already exists: {}'.format(to_path))
+        else:
+            log.debug('Copying "static" to build dir: {}'.format(to_path))
+            copy(from_path, to_path)
 
 
 # # Object manipulation
@@ -163,6 +230,7 @@ def last_month_year(iso=True):
 
 # # Path manipulation
 def expand_path(path):
+    path = path.strip()
     return os.path.abspath(os.path.expanduser(path))
 
 
@@ -221,7 +289,6 @@ def mkdirs(path):
         os.makedirs(path)
     else:
         log.debug('mkdirs failed. Path exists: {}'.format(path))
-
 
 
 def copy(src, dst):

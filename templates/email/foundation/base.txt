@@ -1,0 +1,14 @@
+{% block content %}{% endblock %}
+
+-Chris
+
+-- 
+ Chris Ward <cward@redhat.com>
+ Community Development - Czech Republic
+ Mobile: +420 603 932 382 (CZ)
+ RH Ext: 8262071
+--
+" The squeaky wheel gets the grease!"
+" Unless."
+" Nullius in verbia."
+--

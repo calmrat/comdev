@@ -5,40 +5,21 @@
 '''
 '''
 
-import functools
 import logging
 import os
 import shutil
 import subprocess
 
-from babel.support import Translations
 import click
 import ipdb  # NOQA
 
 from comdev import __app__
 from comdev.lib import render_template, load_config, get_jinja2_env, dumps
-from comdev.lib import expand_path, mkdirs, touch, copy
+from comdev.lib import expand_path, mkdirs, touch, copy, build_clean
+from comdev.lib import static_copy
 
 # Setup console logging; since this is a bin script, grab root
 log = logging.getLogger(__app__)
-
-
-def _clean_build(path_build):
-    if os.path.exists(path_build):
-        log.debug('Cleaning up old builds in {}'.format(path_build))
-        shutil.rmtree(path_build)
-
-
-def _copy_static(path_build, path_static):
-    # Copy out all the static files to root of output directory
-    for _path in os.listdir(path_static):
-        from_path = os.path.join(path_static, _path)
-        to_path = os.path.join(path_build, _path)
-        if os.path.exists(to_path):
-            log.warning('"static" path already exists: {}'.format(to_path))
-        else:
-            log.debug('Copying "static" to build dir: {}'.format(to_path))
-            shutil.copytree(from_path, to_path)
 
 
 @click.group()
@@ -74,30 +55,18 @@ def build(ctx, config_dir, relative_urls):
     path_locale = expand_path(paths['locale'])
 
     # Clean up the previous build
-    _clean_build(path_build)
-    _copy_static(path_build, path_static)
-
-    jinja2_env = get_jinja2_env(path_templates)
-
-    # add the ext to the jinja environment
-    if relative_urls:
-        jinja2_env.filters['url'] = rel_url
-        jinja2_env.filters['static'] = functools.partial(rel_url, static=True)
-    else:
-        jinja2_env.filters['url'] = ext_url
-        jinja2_env.filters['static'] = functools.partial(ext_url, static=True)
+    build_clean(path_build)
+    static_copy(path_build, path_static)
 
     # Build all the pages for the site
     templates = config['templates'].get()
     params = {}
 
-    os.environ['PATH_BUILD'] = path_build
     for path in templates:
         for locale in locales:
             os.environ['LOCALE'] = locale
-            translations = Translations.load(path_locale, [locale])
-            jinja2_env.install_gettext_translations(translations,
-                                                    newstyle=True)
+            jinja2_env = get_jinja2_env(
+                path_templates, relative_urls, path_build, path_locale, locale)
             lang = locale.split('_')[0]
             params['lang'] = lang
             content = render_template(
@@ -112,35 +81,6 @@ def build(ctx, config_dir, relative_urls):
             # dump the rendered file
             dumps(content, dest_file)
             assert os.path.exists(dest_file)
-
-
-def ext_url(path, static=False, lang=None):
-    path = path.strip()
-    path_build = os.environ['PATH_BUILD']
-    locale = os.environ.get('LOCALE', 'en_US')
-    lang = lang or locale.split('_')[0]
-    if path[0] == '/':
-        path = path.lstrip('/')  # path.join only joins if no leading '/'
-        if static:
-            path = os.path.join(path_build, path)
-        else:
-            path = os.path.join(path_build, lang, path)
-    else:
-        path = os.path.join(path_build, path)
-
-    path = 'file://{}'.format(path)
-    return path
-
-
-def rel_url(path, static=False, lang=None):
-    path = path.strip()
-    locale = os.environ.get('LOCALE', 'en_US')
-    lang = lang or locale.split('_')[0]
-    if path[0] == '/' and static:
-        path = path.lstrip('/')  # path.join only joins if no leading '/'
-        path = os.path.join(lang, path)
-    new_path = '{}'.format(path)
-    return new_path
 
 
 @cli.command('i18n')

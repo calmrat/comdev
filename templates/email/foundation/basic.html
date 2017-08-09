@@ -1,0 +1,44 @@
+{% extends 'email/foundation/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<table>
+    <tr>
+    <th>
+        <h1 class="text-center">SUBJECT</h1>
+        <h6 class="text-right">by AUTHOR</h6>
+        <table class="spacer">
+        <tbody>
+            <tr>
+            <td height="16px" style="font-size:16px;line-height:16px;">&#xA0;</td>
+            </tr>
+        </tbody>
+        </table>
+        <h4>SUB-TITLE TEXT</h4>
+        <ul>
+            <li>
+                DESCRIPTION
+            </li>
+        </ul>
+
+        <table class="row">
+        <tbody>
+            <tr>
+            <th class="small-12 large-12 columns first last">
+                <table>
+                <tr>
+                    <th>
+                    <h4><strong>HEADING</strong></h4>
+                    <ul>
+                        <li> SOMETHING </li>
+                    </ul>
+                    </th>
+                </tr>
+                </table>
+            </th>
+            </tr>
+        </tbody>
+        </table>
+    </th>
+  </tr>
+</table>
+{% endblock %}

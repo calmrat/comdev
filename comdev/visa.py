@@ -11,7 +11,7 @@ import datetime
 import os  # NOQA
 
 import ipdb  # NOQA
-import pdfkit
+from pandoc.core import Document
 
 from comdev.lib import load_config, expand_path, render_template
 from comdev.lib import get_jinja2_env, saveas
@@ -39,6 +39,12 @@ class Viser(object):
         event = config['events'][event_name]
 
         self.params.update(event)
+        self.params.update(
+            {k: expand_path(v) for k, v in self.params.items() if '~' in v})
+
+        with open( self.params['event_description']) as f:
+            content = ''.join(f.readlines())
+            self.params['event_description'] = content
 
     def export(self):
         # # PATTERN? # #
@@ -48,9 +54,13 @@ class Viser(object):
         today = self.params['today']
         path_templates_comdev = expand_path(
             config['paths']['templates'].get('comdev'))
-        jinja2_env = get_jinja2_env(path_templates_comdev)
-        path_template = 'mail/visa-invitation-letter.html'
+        path_template = 'visa/invitation-letter.html'
+        path_build = expand_path(config['paths']['build'])
         path_export = expand_path(config['paths']['export'])
+        path_locale = expand_path(config['paths']['locale'])
+        jinja2_env = get_jinja2_env(path_templates_comdev,
+                                    path_build=path_build,
+                                    path_locale=path_locale)
         content = render_template(jinja2_env, path_template, self.params)
         name = self.params.get('invitee_name').replace(' ', '-')
         path_file = 'visa-invitation-letter-{}-{}'.format(name, today)
@@ -59,9 +69,13 @@ class Viser(object):
         # # END PATTERN? # #
 
         path_pdf = os.path.join(path_export, '{}.pdf'.format(path_file))
-        path_saveas = os.path.join(path_export, path_file)
-        ipdb.set_trace()
+        path_saveas = os.path.join(path_export, path_file + '.html')
+        #doc = Document()
+        #doc.html = content
+        #doc.to_file(path_pdf)
+        import pdfkit
         pdfkit.from_file(path_saveas, path_pdf)
+
 
 
 if __name__ == '__main__':
@@ -72,4 +86,3 @@ if __name__ == '__main__':
                   dt_departure='2018-01-28')
     v = Viser(**kwargs)
     v.export()
-    ipdb.set_trace()
