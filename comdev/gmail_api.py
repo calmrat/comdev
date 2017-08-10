@@ -13,6 +13,7 @@ Instructions for getting your OAuth2 client_secret and credentials
 '''
 
 import logging
+import ipdb  # NOQA
 import mimetypes
 import os
 import time
@@ -305,5 +306,4 @@ log = logging.getLogger(__name__)
 
 
 if __name__ == '__main__':
-    import ipdb  # NOQA
     ipdb.set_trace()
