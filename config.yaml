@@ -5,7 +5,7 @@ paths:
     locale: './i18n'
 
 templates: [
-    'index.html',
+    'www/index.html',
 ]
 
 locales: ['en_US', 'cs_CZ']

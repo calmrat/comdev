@@ -75,7 +75,7 @@ def ext_url(path, path_build, static=False, lang=None):
     else:
         path = os.path.join(path_build, path)
 
-    #path = 'file://{}'.format(path)
+    # path = 'file://{}'.format(path)
     return path
 
 
@@ -90,10 +90,24 @@ def rel_url(path, static=False, lang=None):
     return new_path
 
 
-def get_jinja2_env(path_templates, rel_paths=False, path_build=None,
-                   path_locale=None, locale='en_US'):
-    path_templates = expand_path(path_templates)
-    path_build = expand_path(path_build) if path_build else path_build
+def get_jinja2_env(path_templates=None, rel_paths=False, path_build=None,
+                   path_locale=None, locale='en_US', app=None):
+    if app:
+        # telling us to load an app overrides any other kwargs...
+        config = load_config(app).get()
+        path_templates = expand_path(config['paths']['templates'])
+        path_build = expand_path(config['paths']['build'])
+        path_locale = expand_path(config['paths']['locale'])
+    else:
+        path_templates = expand_path(path_templates)
+        path_build = expand_path(path_build) if path_build else ''
+        path_locale = expand_path(path_locale) if path_locale else ''
+
+    if not path_templates:
+        raise ValueError(
+            'Jinja2 requires a valid path_templates, not ({})'.format(
+                path_templates))
+
     _loader = jinja2.FileSystemLoader(path_templates)
 
     # FIXME: make this a kwarg 'extensions'?
