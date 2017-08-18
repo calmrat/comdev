@@ -7,6 +7,7 @@
 
 import logging
 
+import pandas as pd
 import pyrebase
 import ipdb  # NOQA
 
@@ -53,6 +54,16 @@ class Firebaser(object):
                 'Invalid user credentials. Check login and password.')
         id_token = user['idToken']
         return id_token
+
+    def get(self, path):
+        db = self.db
+        child = [db.child(child_path) for child_path in path.split('.')][-1]
+        # we should now be holding the correct db path reference in db var
+        # grab the data
+        data = child.get()
+        data = {row.key(): row.val() for row in data.each()}
+        df = pd.DataFrame.from_dict(data, 'index')
+        return df
 
 
 log = logging.getLogger(__name__)

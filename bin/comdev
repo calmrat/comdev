@@ -15,9 +15,7 @@ import ipdb  # NOQA
 
 from comdev import __app__
 from comdev.lib import render_template, load_config, get_jinja2_env, dumps
-from comdev.lib import mkdirs, touch, copy
-from comdev.lib import expand_path as xp
-from comdev.lib import static_copy, build_clean
+from comdev.lib import expand_path, mkdirs, touch, copy
 
 # Setup console logging; since this is a bin script, grab root
 log = logging.getLogger(__app__)
@@ -40,58 +38,53 @@ def cli(ctx, quiet, debug, app_name):
 
 
 @cli.command('build')
-@click.argument('config-dir', type=str, default='./')
-@click.option('--relative-urls', is_flag=True, default=False)
-@click.option('--static-only', is_flag=True, default=False)
+@click.option('--config-dir', '-c', type=str, default=None)
+@click.option('--relative-urls', '-r', is_flag=True, default=False)
 @click.pass_context
 def build(ctx, config_dir, relative_urls, static_only):
     app_name = ctx.obj['app_name']
 
+    config_dir = config_dir or './'
+
     config = load_config(app_name, config_dir).get()
     locales = config['locales']
-
     paths = config['paths']
-    path_templates = xp(paths['templates'])
-    path_build = xp(paths['build'])
-    # path_static = xp(paths['static'])
-    path_static = xp(os.path.join(path_templates, app_name, 'static'))
-    path_locale = xp(paths['locale'])
-
-    # Clean up the previous build
-    build_clean(path_build)
-    static_copy(path_build, path_static)
-
-    if static_only:
-        log.info('Static only flag is set. My work is done here. Quitting.')
-        sys.exit(0)
+    path_templates = expand_path(paths['templates'])
+    path_build = expand_path(paths['build'])
+    path_static = expand_path(paths['static'])
+    path_locale = expand_path(paths['locale'])
 
     # Build all the pages for the site
     templates = config['templates']
     params = {}
 
+    jinja2_env = get_jinja2_env(
+        path_templates, relative_urls, path_build, path_locale, path_static)
+
     for path in templates:
         for locale in locales:
             os.environ['LOCALE'] = locale
-            jinja2_env = get_jinja2_env(
-                path_templates, relative_urls, path_build, path_locale, locale)
             lang = locale.split('_')[0]
             params['lang'] = lang
             content = render_template(
-                jinja2_env, path, params, inline_css=False)
-
+                jinja2_env, path, params, inline_css=False, locale=locale,
+                path_locale=path_locale)
             # Save the rendered page to disk
-            dest_file = os.path.join(path_build, lang, path)
-            dest_path = os.path.dirname(dest_file)
-            # create the directory struct where the file will live
-            if not os.path.exists(dest_path):
-                os.makedirs(dest_path)
-            # dump the rendered file
+            if lang == 'en':
+                # FIXME: set default as global and respect that?
+                # en should be build as default page (without lang tag)
+                dest_file = os.path.join(path_build, path)
+            else:
+                _path = path.split('.')
+                _path = '.'.join([''.join(_path[0:-1]), lang, _path[-1]])
+                dest_file = os.path.join(path_build, _path)
+
             dumps(content, dest_file)
-            assert os.path.exists(dest_file)
 
 
 @cli.command('i18n')
-@click.argument('action', nargs=-1)
+@click.argument('action',
+                type=click.Choice(['extract', 'init', 'update', 'compile']))
 @click.pass_context
 def i18n(ctx, action):
     '''
@@ -124,21 +117,21 @@ def i18n(ctx, action):
     # These are the languages we want to build for
     languages = ['en_US', 'cs_CZ', 'sk_SK']
 
-    if 'extract' in action:
+    if 'extract' == action:
         cmd = 'pybabel -v extract -F babel.cfg -o ./i18n/messages.pot ./'
         subprocess.run(cmd, shell=True)
 
-    if 'init' in action:
+    if 'init' == action:
         cmd = 'pybabel init -l {} -d ./i18n -i ./i18n/messages.pot'
         for lang in languages:
             subprocess.run(cmd.format(lang), shell=True)
 
-    if 'update' in action:
+    if 'update' == action:
         cmd = 'pybabel update -l {} -d ./i18n -i ./i18n/messages.pot'
         for lang in languages:
             subprocess.run(cmd.format(lang), shell=True)
 
-    if 'compile' in action:
+    if 'compile' == action:
         cmd = 'pybabel compile -f -d ./i18n'
         subprocess.run(cmd, shell=True)
 

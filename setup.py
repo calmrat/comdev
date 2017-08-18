@@ -5,11 +5,11 @@
 from setuptools import setup
 import sys
 
+from comdev import __version__ as VERSION
+
 if sys.version_info < (3, 4):
     sys.exit('Sorry, Python < 3.4 is not supported')
     sys.exit('Python 3.6 is RECOMMENDED')
-
-from comdev import __version__ as VERSION
 
 long_description = '''Community Development support library'''
 
@@ -41,13 +41,14 @@ setup_info = dict(
         'ldap3',
         'meetup-api',
         'oauth2client',
+        'openpyxl',
         'pandas',
         'pdfkit',
         'premailer',
         'progressbar2',
         'python-twitter',
+        'pyrebase',
         'requests',
-        'oauth2client',
         'xlwt',
         # required packages for pyandoc:
         # - pandoc
