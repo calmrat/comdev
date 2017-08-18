@@ -23,6 +23,11 @@ import pandas as pd
 from premailer import Premailer
 import yaml
 
+from comdev import __app__
+
+
+re_email = re.compile('^["\']?(([^<]*?)["\']? ?<)?([^>]+?)>?$')
+re_emails = re.compile('["\']?(([^<]*?)["\']? ?<)?([^>]+)>?')
 
 # # Configuration with confuse
 def load_config(app_name, path=None):
@@ -37,21 +42,46 @@ def load_config(app_name, path=None):
 
 
 # # JINJA2
+def parse_emails(values):
+    '''
+    Take a string or list of strings and try to extract all the emails
+    '''
+    emails = []
+    if isinstance(values, str):
+        values = [values]
+    # now we know we have a list of strings
+    for value in values:
+        matches = re_emails.findall(value)
+        emails.extend([match[2] for match in matches])
+    return emails
+
+
 def parse_email(string):
     '''
     '''
     string = string.strip()
-    result = re.match('^(["\']?([^<]*?)["\']? ?<)?([^>]+?)>?$', string)
+    result = re_email.match(string)
     _, name, email = result.groups()
-    user = (email, name)
-    return user
+    return email
 
 
-def render_template(jinja2_env, path, params, inline_css=False):
+def render_template(jinja2_env, path, params=None, inline_css=False, locale='en_US',
+                    path_locale=None):
     '''
     '''
+    params = params or {}
+    if isinstance(jinja2_env, str) and os.path.exists(expand_path(jinja2_env)):
+        jinja2_env = get_jinja2_env(jinja2_env)
+
+    path_locale = expand_path(path_locale) if path_locale else path_locale
+    if locale and path_locale:
+        translations = Translations.load(path_locale, [locale])
+        jinja2_env.install_gettext_translations(translations, newstyle=True)
+
+    params['_page'] = path
     template = jinja2_env.get_template(path)
     content = template.render(**params)
+
     if os.path.basename(path).split('.')[-1].lower() == 'html':
         if inline_css:
             log.debug('... Inlining CSS')
@@ -59,41 +89,49 @@ def render_template(jinja2_env, path, params, inline_css=False):
                 content, remove_classes=True,
                 cssutils_logging_level=logging.ERROR,
                 preserve_inline_attachments=False).transform()
+
     return content
 
 
 def ext_url(path, path_build, static=False, lang=None):
-    path = expand_path(path)
-    locale = os.environ.get('LOCALE', 'en_US')
-    lang = lang or locale.split('_')[0]
+    if lang:
+        matcher = re.search('(.*)(\.(\w\w))?\.(html)$', path)
+        if matcher:
+            prefix, _, cur_lang, ext = matcher.groups()
+        else:
+            log.error('Unable to detect language from url: {}'.format(path))
+            return path
+
+        # FIXME: this should respect GLOBAL default for default lang
+        if lang == 'en':
+            path = '.'.join([prefix, ext])
+        else:
+            path = '.'.join([prefix, lang, ext])
+
     if path[0] == '/':
         path = path.lstrip('/')  # path.join only joins if no leading '/'
-        if static:
-            path = os.path.join(path_build, path)
-        else:
-            path = os.path.join(path_build, lang, path)
+        path = os.path.join(path_build, path)
     else:
         path = os.path.join(path_build, path)
-
-    #path = 'file://{}'.format(path)
     return path
 
 
 def rel_url(path, static=False, lang=None):
     path = expand_path(path)
-    locale = os.environ.get('LOCALE', 'en_US')
-    lang = lang or locale.split('_')[0]
-    if path[0] == '/' and static:
-        path = path.lstrip('/')  # path.join only joins if no leading '/'
-        path = os.path.join(lang, path)
-    new_path = '{}'.format(path)
-    return new_path
+    #if path[0] == '/' and static:
+    #    path = path.lstrip('/')  # path.join only joins if no leading '/'
+    return path
 
 
 def get_jinja2_env(path_templates, rel_paths=False, path_build=None,
-                   path_locale=None, locale='en_US'):
+                   path_locale=None, path_static=None):
     path_templates = expand_path(path_templates)
     path_build = expand_path(path_build) if path_build else path_build
+
+    if path_build and path_static:
+        build_clean(path_build)
+        static_copy(path_build, path_static)
+
     _loader = jinja2.FileSystemLoader(path_templates)
 
     # FIXME: make this a kwarg 'extensions'?
@@ -114,11 +152,6 @@ def get_jinja2_env(path_templates, rel_paths=False, path_build=None,
                                                path_build=path_build)
         env.filters['static'] = functools.partial(ext_url, static=True,
                                                   path_build=path_build)
-
-    if path_locale:
-        translations = Translations.load(path_locale, [locale])
-        env.install_gettext_translations(translations, newstyle=True)
-
     return env
 
 
@@ -252,22 +285,22 @@ def set_path(dirname, parent_path=None, makedirs=True, env_var=None):
 def saveas(title, content, ext, subdir=None):
     path = sluggify(title, ext, subdir)
     dumps(content, path)
+    return path
 
 
 def sluggify(string, ext=None, subdir=None, keep_characters=(' ', '.', '-')):
-    path = expand_path(subdir or './')
     slug = "".join(c for c in string
                    if c.isalnum() or c in keep_characters).rstrip()
     slug = "-".join(slug.split())
     # append an extension to the slug (eg, file extension)
     ext = '.' + ext.lstrip('.') if ext else ''
     slug = '{}{}'.format(slug, ext) if ext else slug
-    # prepend a path if provided
-    if not os.path.exists(path):
-        log.debug('Creating path: {}'.format(path))
-        os.makedirs(path)
-    slug = os.path.join(path, slug) if path else slug
     slug = re.sub('\-+', '-', slug)
+    # prepend a path if provided
+    if subdir:
+        subdir = expand_path(subdir)
+        mkdirs(subdir)
+        slug = os.path.join(subdir, slug)
     return slug
 
 
@@ -277,7 +310,10 @@ def dumps(content, path):
     '''
     path = expand_path(path)
     log.info('Dumping content to {}'.format(path))
-    mkdirs(path)
+    # create the directory struct where the file will live first
+    dest_path = os.path.dirname(path)
+    if not os.path.exists(dest_path):
+        os.makedirs(dest_path)
     with open(path, 'w') as out:
         out.writelines(content)
 
@@ -345,7 +381,7 @@ def save_pickle(df, path):
 
 
 logging.basicConfig(format='%(message)s')
-log = logging.getLogger(__name__)
+log = logging.getLogger(__app__)
 
 USER = getpass.getuser()
 UTC_TZ = pytz.timezone('utc')

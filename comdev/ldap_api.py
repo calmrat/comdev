@@ -9,6 +9,7 @@ import os
 from ldap3 import Server, Connection, ALL
 import pandas as pd
 
+from comdev import __app__
 from comdev.lib import load_config, expand_path, load_yaml
 
 
@@ -80,10 +81,9 @@ class LDAPer(object):
             df = pd.DataFrame()
             for entry in entries:
                 series = pd.Series(entry.entry_attributes_as_dict)
-                df = pd.concat([df, series])
-            return df
-        else:
-            return entries
+                entries = pd.concat([df, series])
+        log.debug('LDAP search END')
+        return entries
 
     def find_uids(self, uids, live):
         if live:
@@ -97,7 +97,7 @@ class LDAPer(object):
 
 
 # Setup console logging
-log = logging.getLogger(__name__)
+log = logging.getLogger(__app__)
 
 
 if __name__ == '__main__':
