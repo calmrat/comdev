@@ -8,7 +8,6 @@
 import logging
 import os
 import subprocess
-import sys
 
 import click
 import ipdb  # NOQA
@@ -41,7 +40,7 @@ def cli(ctx, quiet, debug, app_name):
 @click.option('--config-dir', '-c', type=str, default=None)
 @click.option('--relative-urls', '-r', is_flag=True, default=False)
 @click.pass_context
-def build(ctx, config_dir, relative_urls, static_only):
+def build(ctx, config_dir, relative_urls):
     app_name = ctx.obj['app_name']
 
     config_dir = config_dir or './'
@@ -149,10 +148,10 @@ def newsite(ctx, basepath):
     join = os.path.join
 
     config = load_config(__app__).get()
-    src_path = xp(config['paths']['src_repo'])
+    src_path = expand_path(config['paths']['src_repo'])
 
     # needs to have the ending '/' to be considered a path by mkdirs()
-    repo_path = join(xp(basepath), app_name) + '/'
+    repo_path = join(expand_path(basepath), app_name) + '/'
     mkdirs(repo_path)
 
     paths = {
