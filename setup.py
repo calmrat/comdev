@@ -33,6 +33,7 @@ setup_info = dict(
         'confuse',
         'facepy',
         'feedparser',
+        'flask',
         # 'gdata-python3',  # py3 compatible
         'google-api-python-client',
         'ipdb',
