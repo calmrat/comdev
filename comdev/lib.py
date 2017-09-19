@@ -227,6 +227,8 @@ def today(iso=True):
     else:
         return d
 
+def ts_now():
+    return pd.to_datetime(today(False))
 
 def now(iso=True):
     dt = datetime.datetime.now()
