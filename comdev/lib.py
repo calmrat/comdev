@@ -162,6 +162,7 @@ def build_clean(path_build):
     if os.path.exists(path_build):
         log.debug('Cleaning up old builds in {}'.format(path_build))
         shutil.rmtree(path_build)
+    os.makedirs(path_build)
 
 
 def static_copy(path_build, path_static):
