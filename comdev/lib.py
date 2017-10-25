@@ -93,7 +93,7 @@ def render_template(jinja2_env, path, params=None, inline_css=False, locale='en_
     return content
 
 
-def ext_url(path, path_build, static=False, lang=None):
+def ext_url(path, path_build=None, static=False, lang=None):
     if lang:
         matcher = re.search('(.*)(\.(\w\w))?\.(html)$', path)
         if matcher:
@@ -108,11 +108,12 @@ def ext_url(path, path_build, static=False, lang=None):
         else:
             path = '.'.join([prefix, lang, ext])
 
-    if path[0] == '/':
-        path = path.lstrip('/')  # path.join only joins if no leading '/'
-        path = os.path.join(path_build, path)
-    else:
-        path = os.path.join(path_build, path)
+    if path_build:
+        if path[0] == '/':
+            path = path.lstrip('/')  # path.join only joins if no leading '/'
+            path = os.path.join(path_build, path)
+        else:
+            path = os.path.join(path_build, path)
     return path
 
 
@@ -145,8 +146,10 @@ def get_jinja2_env(path_templates, rel_paths=False, path_build=None,
 
     # add the ext to the jinja environment
     if rel_paths:
-        env.filters['url'] = rel_url
-        env.filters['static'] = functools.partial(rel_url, static=True)
+        # env.filters['url'] = rel_url
+        # env.filters['static'] = functools.partial(rel_url, static=True)
+        env.filters['url'] = functools.partial(ext_url, static=False)
+        env.filters['static'] = functools.partial(ext_url, static=True)
     else:
         env.filters['url'] = functools.partial(ext_url, static=False,
                                                path_build=path_build)
