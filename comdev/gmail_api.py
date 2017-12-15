@@ -54,7 +54,7 @@ def get_credentials(app_name, path_credentials, client_secret, scopes):
         sys.argv = sys.argv[0:1]
         credentials = tools.run_flow(flow, store)
         sys.argv = _argv
-        log.info('Storing credentials to ' + credentials)
+        log.info('Storing credentials to ' + str(credentials))
     return credentials
 
 
