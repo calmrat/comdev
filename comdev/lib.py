@@ -18,8 +18,6 @@ import shutil
 from babel.support import Translations
 import confuse
 import jinja2
-import ipdb  # NOQA
-import pandas as pd
 from premailer import Premailer
 import yaml
 
@@ -400,5 +398,4 @@ LOCAL_TZ = pytz.timezone('utc')
 
 
 if __name__ == '__main__':
-    import ipdb  # NOQA
-    ipdb.set_trace()
+    pass

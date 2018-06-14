@@ -5,7 +5,7 @@ This repository contains a bunch of shared functions, classes, templates etc for
 ## Install
 
 ```
-$> pip install comdev
+$> pip install -e . 
 ```
 
 ## Usage

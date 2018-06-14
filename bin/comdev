@@ -10,7 +10,6 @@ import os
 import subprocess
 
 import click
-import ipdb  # NOQA
 
 from comdev import __app__
 from comdev.lib import render_template, load_config, get_jinja2_env, dumps
