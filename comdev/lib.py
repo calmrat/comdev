@@ -24,6 +24,11 @@ import yaml
 from comdev import __app__
 
 
+try:
+    import pandas as pd
+except ImportError:
+    log.warn('INSTALL PANDAS')
+
 re_email = re.compile('^["\']?(([^<]*?)["\']? ?<)?([^>]+?)>?$')
 re_emails = re.compile('["\']?(([^<]*?)["\']? ?<)?([^>]+)>?')
 
